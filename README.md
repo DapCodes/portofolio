@@ -37,3 +37,13 @@ To run this project locally:
 1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/your-portfolio.git
+
+## 🤖 AI Support Explanation
+
+AI assisted in several aspects of this portfolio project, including:
+
+- 🎨 **Color Selection** – Recommending modern and visually appealing color schemes for a clean user interface  
+- 🧹 **Code Refinement** – Helping optimize and clean up HTML, CSS, and JavaScript for better readability and performance  
+- 📚 **Library Recommendations** – Suggesting animation and UI libraries such as GSAP and AOS to enhance user experience
+
+All final implementations were reviewed and customized manually to ensure they reflect my personal development style.
