@@ -1,438 +1,518 @@
-//js untuk GSAP, dan lain lain
-        // Initialize AOS with enhanced settings
-        AOS.init({
-            duration: 1200,
-            once: true,
-            offset: 120,
-            easing: 'ease-out-cubic'
-        });
+let scene,
+  camera,
+  renderer,
+  particles,
+  mouse = { x: 0, y: 0 };
 
-        // Register GSAP plugins
-        gsap.registerPlugin(ScrollTrigger);
+function initInteractiveBackground() {
+  const container = document.getElementById("interactive-bg");
 
-        // Enhanced Hero animations
-        const heroTimeline = gsap.timeline();
-        heroTimeline
-            .from('.hero-title', {
-                duration: 1.5,
-                y: 120,
-                opacity: 0,
-                ease: 'power4.out'
-            })
-            .from('.subtitle', {
-                duration: 1.2,
-                y: 60,
-                opacity: 0,
-                ease: 'power3.out'
-            }, '-=1')
-            .from('.cta-button', {
-                duration: 1,
-                y: 40,
-                scale: 0.8,
-                ease: 'back.out(1.7)'
-            }, '-=0.5');
+  // Scene setup
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  renderer = new THREE.WebGLRenderer({ alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+  container.appendChild(renderer.domElement);
 
-        // Enhanced mobile menu functionality
-        const mobileMenu = document.getElementById('mobile-menu');
-        const navMenu = document.getElementById('nav-menu');
+  // Create particles
+  const particleCount = 100;
+  const positions = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
 
-        mobileMenu.addEventListener('click', () => {
-            const isActive = navMenu.classList.contains('active');
-            
-            if (isActive) {
-                gsap.to(navMenu, {
-                    duration: 0.3,
-                    opacity: 0,
-                    y: -20,
-                    ease: 'power2.in',
-                    onComplete: () => {
-                        navMenu.classList.remove('active');
-                    }
-                });
-            } else {
-                navMenu.classList.add('active');
-                gsap.fromTo(navMenu, 
-                    { opacity: 0, y: -20 },
-                    { duration: 0.3, opacity: 1, y: 0, ease: 'power2.out' }
-                );
-            }
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 20;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
 
-            const icon = mobileMenu.querySelector('i');
-            icon.classList.toggle('fa-bars');
-            icon.classList.toggle('fa-times');
-        });
+    colors[i * 3] = 0.2 + Math.random() * 0.3; // R
+    colors[i * 3 + 1] = 0.4 + Math.random() * 0.3; // G
+    colors[i * 3 + 2] = 0.6 + Math.random() * 0.4; // B
+  }
 
-        // Enhanced smooth scrolling with GSAP
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    const offset = 90;
-                    
-                    gsap.to(window, {
-                        duration: 1.2,
-                        scrollTo: {
-                            y: target.offsetTop - offset,
-                            autoKill: false
-                        },
-                        ease: 'power3.inOut'
-                    });
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
-                    // Close mobile menu
-                    if (navMenu.classList.contains('active')) {
-                        navMenu.classList.remove('active');
-                        const icon = mobileMenu.querySelector('i');
-                        icon.classList.add('fa-bars');
-                        icon.classList.remove('fa-times');
-                    }
-                }
-            });
-        });
+  const material = new THREE.PointsMaterial({
+    size: 0.05,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.6,
+  });
 
-        // Enhanced navbar scroll effects
-        let lastScrollY = 0;
-        let ticking = false;
+  particles = new THREE.Points(geometry, material);
+  scene.add(particles);
 
-        function updateNavbar() {
-            const scrollY = window.pageYOffset;
-            
-            if (scrollY > lastScrollY && scrollY > 100) {
-                // Scrolling down
-                gsap.to('.navbar', {
-                    duration: 0.4,
-                    y: -100,
-                    ease: 'power2.out'
-                });
-            } else {
-                // Scrolling up
-                gsap.to('.navbar', {
-                    duration: 0.4,
-                    y: 0,
-                    ease: 'power2.out'
-                });
-            }
-            
-            lastScrollY = scrollY;
-            ticking = false;
-        }
+  camera.position.z = 5;
 
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                requestAnimationFrame(updateNavbar);
-                ticking = true;
-            }
-        });
+  // Mouse movement listener
+  document.addEventListener("mousemove", onMouseMove, false);
 
-        // Enhanced parallax effect for hero
-        gsap.to('.hero', {
-            yPercent: -50,
-            ease: 'none',
-            scrollTrigger: {
-                trigger: '.hero',
-                start: 'top bottom',
-                end: 'bottom top',
-                scrub: true
-            }
-        });
+  // Start animation
+  animate();
+}
 
-        // Section reveal animations
-        gsap.utils.toArray('.section').forEach(section => {
-            gsap.fromTo(section, 
-                { 
-                    opacity: 0.8,
-                    y: 50 
-                },
-                {
-                    opacity: 1,
-                    y: 0,
-                    duration: 1,
-                    ease: 'power3.out',
-                    scrollTrigger: {
-                        trigger: section,
-                        start: 'top 80%',
-                        toggleActions: 'play none none reverse'
-                    }
-                }
-            );
-        });
+function onMouseMove(event) {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+}
 
-        // Enhanced tech items stagger animation
-        gsap.fromTo('.tech-item', 
-            {
-                opacity: 0,
-                y: 60,
-                scale: 0.8
-            },
-            {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                duration: 0.8,
-                ease: 'back.out(1.7)',
-                stagger: 0.1,
-                scrollTrigger: {
-                    trigger: '.tech-grid',
-                    start: 'top 80%',
-                    toggleActions: 'play none none reverse'
-                }
-            }
-        );
+function animate() {
+  requestAnimationFrame(animate);
 
-        // Timeline items reveal
-        gsap.fromTo('.timeline-item', 
-            {
-                opacity: 0,
-                x: -100
-            },
-            {
-                opacity: 1,
-                x: 0,
-                duration: 1,
-                ease: 'power3.out',
-                stagger: 0.2,
-                scrollTrigger: {
-                    trigger: '.timeline',
-                    start: 'top 80%',
-                    toggleActions: 'play none none reverse'
-                }
-            }
-        );
+  if (particles) {
+    // Rotate particles based on mouse position
+    particles.rotation.x += (mouse.y * 0.05 - particles.rotation.x) * 0.05;
+    particles.rotation.y += (mouse.x * 0.05 - particles.rotation.y) * 0.05;
 
-        // Project cards animation
-        gsap.fromTo('.project-card', 
-            {
-                opacity: 0,
-                y: 80,
-                rotationY: 15
-            },
-            {
-                opacity: 1,
-                y: 0,
-                rotationY: 0,
-                duration: 1.2,
-                ease: 'power3.out',
-                stagger: 0.2,
-                scrollTrigger: {
-                    trigger: '.projects-grid',
-                    start: 'top 80%',
-                    toggleActions: 'play none none reverse'
-                }
-            }
-        );
+    // Add gentle floating animation
+    particles.rotation.z += 0.001;
 
-        // Certificate cards animation
-        gsap.fromTo('.certificate-card', 
-            {
-                opacity: 0,
-                scale: 0.8,
-                y: 60
-            },
-            {
-                opacity: 1,
-                scale: 1,
-                y: 0,
-                duration: 1,
-                ease: 'back.out(1.7)',
-                stagger: 0.15,
-                scrollTrigger: {
-                    trigger: '.certificates-grid',
-                    start: 'top 80%',
-                    toggleActions: 'play none none reverse'
-                }
-            }
-        );
+    // Update particle positions for floating effect
+    const positions = particles.geometry.attributes.position.array;
+    for (let i = 0; i < positions.length; i += 3) {
+      positions[i + 1] += Math.sin(Date.now() * 0.001 + positions[i]) * 0.001;
+    }
+    particles.geometry.attributes.position.needsUpdate = true;
+  }
 
-        // Social cards animation
-        gsap.fromTo('.social-card', 
-            {
-                opacity: 0,
-                y: 60,
-                rotationX: 15
-            },
-            {
-                opacity: 1,
-                y: 0,
-                rotationX: 0,
-                duration: 1,
-                ease: 'power3.out',
-                stagger: 0.1,
-                scrollTrigger: {
-                    trigger: '.connect-grid',
-                    start: 'top 80%',
-                    toggleActions: 'play none none reverse'
-                }
-            }
-        );
+  renderer.render(scene, camera);
+}
 
-        // Enhanced hover effects
-        document.querySelectorAll('.tech-item').forEach(item => {
-            item.addEventListener('mouseenter', () => {
-                gsap.to(item, {
-                    duration: 0.4,
-                    scale: 1.08,
-                    rotationY: 5,
-                    ease: 'power2.out'
-                });
-            });
+// Handle window resize
+function onWindowResize() {
+  if (camera && renderer) {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+}
 
-            item.addEventListener('mouseleave', () => {
-                gsap.to(item, {
-                    duration: 0.4,
-                    scale: 1,
-                    rotationY: 0,
-                    ease: 'power2.out'
-                });
-            });
-        });
+window.addEventListener("resize", onWindowResize, false);
 
-        // Enhanced project card hover
-        document.querySelectorAll('.project-card').forEach(card => {
-            card.addEventListener('mouseenter', () => {
-                gsap.to(card, {
-                    duration: 0.4,
-                    scale: 1.03,
-                    rotationY: 3,
-                    ease: 'power2.out'
-                });
-            });
+// Page content data
+const pages = {
+  home: `
+                <section class="hero">
+                    <div class="interactive-bg" id="interactive-bg"></div>
+                    <div class="hero-content">
+                        <h1>Daffa Ramadhan M</h1>
+                        <p class="subtitle">Junior Backend Web Developer</p>
+                        <a href="#" class="cta-button" onclick="loadPage('projects')">Explore My Work</a>
+                    </div>
+                </section>
+            `,
+  technologies: `
+                <section class="section">
+                    <h2 class="section-title">Technologies & Skills</h2>
+                    <div class="grid grid-4">
+                        <div class="card tech-item">
+                            <i class="fab fa-html5"></i>
+                            <h3>HTML5</h3>
+                        </div>
+                        <div class="card tech-item">
+                            <i class="fab fa-css3-alt"></i>
+                            <h3>CSS3</h3>
+                        </div>
+                        <div class="card tech-item">
+                            <i class="fab fa-js-square"></i>
+                            <h3>JavaScript</h3>
+                        </div>
+                        <div class="card tech-item">
+                            <i class="fab fa-golang"></i>
+                            <h3>Golang</h3>
+                        </div>
+                        <div class="card tech-item">
+                            <i class="fab fa-php"></i>
+                            <h3>PHP</h3>
+                        </div>
+                        <div class="card tech-item">
+                            <i class="fab fa-laravel"></i>
+                            <h3>Laravel</h3>
+                        </div>
+                        <div class="card tech-item">
+                            <i class="fab fa-bootstrap"></i>
+                            <h3>Bootstrap</h3>
+                        </div>
+                        <div class="card tech-item">
+                            <i class="fab fa-docker"></i>
+                            <h3>Docker</h3>
+                        </div>
+                        <div class="card tech-item">
+                            <i class="fab fa-figma"></i>
+                            <h3>Figma</h3>
+                        </div>
+                        <div class="card tech-item">
+                            <i class="fab fa-git-alt"></i>
+                            <h3>Git</h3>
+                        </div>
+                        <div class="card tech-item">
+                            <i class="fas fa-database"></i>
+                            <h3>MySQL</h3>
+                        </div>
+                        <div class="card tech-item">
+                            <i class="fas fa-database"></i>
+                            <h3>PostgreSQL</h3>
+                        </div>
+                    </div>
+                </section>
+            `,
+  experience: `
+                <section class="section">
+                    <h2 class="section-title">Professional Experience</h2>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <h3>Internal Internship Program</h3>
+                            <div class="company">SMK Assalaam • June 2025 - July 2025</div>
+                            <p>Participated in an internal internship program focused on deepening web development knowledge. I worked on several hands-on projects using Laravel and APIs, and also explored mobile development using Flutter. This experience significantly improved my problem-solving abilities, team collaboration, and technical execution.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h3>Industrial Class Trainee</h3>
+                            <div class="company">PT Dwi Purwa Tech • April 2025 - May 2025</div>
+                            <p>Attended a two-month industrial class organized by PT Dwi Purwa Tech. During the program, I learned full-stack web development using React.js and Express for the frontend and backend. I also gained experience in building RESTful APIs using Laravel, learning to work in a real-world programming environment.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h3>Honda Safety Riding Ambassador</h3>
+                            <div class="company">SMK Assalaam • October 2023 - March 2025</div>
+                            <p>Served as a Honda Safety Riding (HSR) Ambassador, promoting road safety and responsible riding among students. I was actively involved in giving public presentations and educating peers, which improved my communication skills and deepened my understanding of safe transportation practices.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h3>Marketing Team Member</h3>
+                            <div class="company">SMK Assalaam • August 2023 - March 2025</div>
+                            <p>As a student member of the marketing team, I contributed to various school marketing and promotional campaigns. This role taught me key skills in public speaking, confidence building, creative thinking, and teamwork. I actively participated in outreach activities and learned how to effectively engage different audiences.</p>
+                        </div>
+                    </div>
+                </section>
+            `,
+  projects: `
+                <section class="section">
+                    <h2 class="section-title">Featured Projects</h2>
+                    <div class="grid grid-2">
+                        <div class="project-card">
+                            <div class="project-image">
+                                <img src="/assets/img/project/invas.png" alt="INVAS Project" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="project-content">
+                                <h3>INVAS: Inventaris SMK Assalaam</h3>
+                                <p>A school inventory management system to monitor, track, and manage goods using Laravel and MySQL efficiently.</p>
+                                <div class="tech-stack">
+                                    <span class="tech-tag">Laravel</span>
+                                    <span class="tech-tag">Bootstrap</span>
+                                    <span class="tech-tag">MySQL</span>
+                                    <span class="tech-tag">SCSS</span>
+                                    <span class="tech-tag">JS</span>
+                                </div>
+                                <div class="project-links">
+                                    <a href="https://github.com/dapCodes/gudangku" class="project-link" target="_blank">Source Code</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-card">
+                            <div class="project-image">
+                                <img src="/assets/img/project/floryne.png" alt="Floryne Project" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="project-content">
+                                <h3>Floryne</h3>
+                                <p>Floryne is a dynamic web platform to manage and showcase flower-related products and business services online.</p>
+                                <div class="tech-stack">
+                                    <span class="tech-tag">PHP</span>
+                                    <span class="tech-tag">Bootstrap</span>
+                                    <span class="tech-tag">MySQL</span>
+                                </div>
+                                <div class="project-links">
+                                    <a href="https://github.com/DapCodes/Floryne-PHP-Native" class="project-link" target="_blank">Source Code</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-card">
+                            <div class="project-image">
+                                <img src="/assets/img/project/kensho.png" alt="Kensho Project" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="project-content">
+                                <h3>Kensho</h3>
+                                <p>Kensho is a Computer-Based Test platform for schools to manage exams, questions, and student scores efficiently.</p>
+                                <div class="tech-stack">
+                                    <span class="tech-tag">Laravel</span>
+                                    <span class="tech-tag">Bootstrap</span>
+                                    <span class="tech-tag">JavaScript</span>
+                                    <span class="tech-tag">MySQL</span>
+                                </div>
+                                <div class="project-links">
+                                    <a href="https://github.com/DapCodes/Kensho-Learning" class="project-link" target="_blank">Source Code</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-card">
+                            <div class="project-image">
+                                <img src="/assets/img/project/matrix.png" alt="Matrix Multiplication Project" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="project-content">
+                                <h3>Matrix Multiplication</h3>
+                                <p>Interactive tool to perform matrix multiplication directly in the browser using clean HTML, CSS, and JS.</p>
+                                <div class="tech-stack">
+                                    <span class="tech-tag">HTML</span>
+                                    <span class="tech-tag">CSS</span>
+                                    <span class="tech-tag">JS</span>
+                                </div>
+                                <div class="project-links">
+                                    <a href="https://github.com/DapCodes/Matrix-Multiplication" class="project-link" target="_blank">Source Code</a>
+                                    <a href="https://dc-matrixmultiplication.netlify.app" class="project-link" target="_blank">Demo</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-card">
+                            <div class="project-image">
+                                <img src="/assets/img/project/e-cmrc.png" alt="E-Commerce Project" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="project-content">
+                                <h3>E-Commerce Website</h3>
+                                <p>Full-featured online store application for selling products with admin dashboard, cart, and checkout functionalities.</p>
+                                <div class="tech-stack">
+                                    <span class="tech-tag">Laravel</span>
+                                    <span class="tech-tag">Bootstrap</span>
+                                    <span class="tech-tag">MySQL</span>
+                                </div>
+                                <div class="project-links">
+                                    <a href="https://github.com/DapCodes/Laravel-Fundamental" class="project-link" target="_blank">Source Code</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-card">
+                            <div class="project-image">
+                                <img src="/assets/img/project/artsy.png" alt="Matrix Multiplication Project" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="project-content">
+                                <h3>Artsy Fartsy</h3>
+                                <p>Simple drawing apps using clean HTML, CSS, and JS.</p>
+                                <div class="tech-stack">
+                                    <span class="tech-tag">HTML</span>
+                                    <span class="tech-tag">CSS</span>
+                                    <span class="tech-tag">JS</span>
+                                </div>
+                                <div class="project-links">
+                                    <a href="https://github.com/DapCodes/Artsy-Fartsy" class="project-link" target="_blank">Source Code</a>
+                                    <a href="https://artsy-fartsy.vercel.app/" class="project-link" target="_blank">Demo</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            `,
+  certificates: `
+                <section class="section">
+                    <h2 class="section-title">My Certifications</h2>
+                    <div class="grid grid-3">
+                        <div class="certificate-card">
+                            <div class="certificate-image">
+                                <img src="/assets/img/1.png" alt="Introduction to Generative AI Certificate" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="certificate-content">
+                                <h3>Introduction to Generative AI</h3>
+                                <div class="certificate-issuer">Ruang AI x Codepolitan</div>
+                                <div class="certificate-date">Issued: June 2025</div>
+                                <p>Focused on the fundamentals of Generative AI, this course introduces key concepts, real-world applications, and hands-on AI tool usage.</p>
+                            </div>
+                        </div>
+                        <div class="certificate-card">
+                            <div class="certificate-image">
+                                <img src="/assets/img/7.png" alt="Web Development With AI Certificate" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="certificate-content">
+                                <h3>Web Development With AI</h3>
+                                <div class="certificate-issuer">Bandung AI Camp x Sanbercode</div>
+                                <div class="certificate-date">Issued: December 2024</div>
+                                <p>A 90-hour intensive training covering fullstack web development using JavaScript and frameworks, integrated with modern AI tools and APIs.</p>
+                            </div>
+                        </div>
+                        <div class="certificate-card">
+                            <div class="certificate-image">
+                                <img src="/assets/img/6.png" alt="Code Generation and Optimization Certificate" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="certificate-content">
+                                <h3>Code Generation and Optimization Using IBM Granite</h3>
+                                <div class="certificate-issuer">Hacktive8 x IBM</div>
+                                <div class="certificate-date">Issued: July 2025</div>
+                                <p>Advanced training on leveraging IBM Granite to automate code generation, enhance performance, and apply AI in modern software development.</p>
+                            </div>
+                        </div>
+                        <div class="certificate-card">
+                            <div class="certificate-image">
+                                <img src="/assets/img/5.png" alt="Fullstack Web Programming Certificate" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="certificate-content">
+                                <h3>Fullstack Web Programming from Scratch</h3>
+                                <div class="certificate-issuer">Eduwork</div>
+                                <div class="certificate-date">Issued: June 2025</div>
+                                <p>Comprehensive program starting from zero, covering frontend and backend development using HTML, CSS, JavaScript, Node.js, and React.</p>
+                            </div>
+                        </div>
+                        <div class="certificate-card">
+                            <div class="certificate-image">
+                                <img src="/assets/img/2.jpg" alt="Backend Developer Certificate" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="certificate-content">
+                                <h3>Backend Developer (Express, MySQL, Supabase)</h3>
+                                <div class="certificate-issuer">Nextskill</div>
+                                <div class="certificate-date">Issued: June 2025</div>
+                                <p>Backend-focused certification covering API development with Express.js, relational database management with MySQL, and Supabase integration.</p>
+                            </div>
+                        </div>
+                        <div class="certificate-card">
+                            <div class="certificate-image">
+                                <img src="/assets/img/8.png" alt="Using Generative AI for Software Development Certificate" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="certificate-content">
+                                <h3>Using Generative AI for Software Development</h3>
+                                <div class="certificate-issuer">Hacktive8 x IBM</div>
+                                <div class="certificate-date">Issued: July 2025</div>
+                                <p>Specialized certification from IBM on applying Generative AI to accelerate software development, including code automation and best practices.</p>
+                            </div>
+                        </div>
+                        <div class="certificate-card">
+                            <div class="certificate-image">
+                                <img src="/assets/img/9.jpg" alt="Linux & Docker Fundamental Certificate" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="certificate-content">
+                                <h3>Linux & Docker Fundamental</h3>
+                                <div class="certificate-issuer">Nextskill</div>
+                                <div class="certificate-date">Issued: June 2025</div>
+                                <p>Fundamental certification covering Linux system administration and Docker containerization technologies for modern development workflows.</p>
+                            </div>
+                        </div>
+                        <div class="certificate-card">
+                            <div class="certificate-image">
+                                <img src="/assets/img/10.png" alt="Vue JS Fundamental Certificate" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="certificate-content">
+                                <h3>Belajar Vue JS Fundamental</h3>
+                                <div class="certificate-issuer">Nextskill</div>
+                                <div class="certificate-date">Issued: June 2025</div>
+                                <p>Frontend framework certification focusing on Vue.js fundamentals, component architecture, and modern JavaScript development practices.</p>
+                            </div>
+                        </div>
+                        <div class="certificate-card">
+                            <div class="certificate-image">
+                                <img src="/assets/img/11.png" alt="UI/UX Certificate" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="certificate-content">
+                                <h3>Kenalan Seru dengan UI/UX untuk Website</h3>
+                                <div class="certificate-issuer">Nextskill</div>
+                                <div class="certificate-date">Issued: June 2025</div>
+                                <p>UI/UX design certification covering user interface design principles, user experience research, and modern design tools like Figma.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            `,
+  connect: `
+                <section class="section">
+                    <h2 class="section-title">Let's Connect</h2>
+                    <div class="grid grid-2">
+                        <a href="https://www.instagram.com/d4pfft/" class="social-card" target="_blank">
+                            <i class="fab fa-instagram"></i>
+                            <h3>Instagram</h3>
+                            <p>Follow my creative journey and behind-the-scenes content</p>
+                        </a>
+                        <a href="https://www.linkedin.com/in/daffa-ramadhan-3b2239335/" class="social-card" target="_blank">
+                            <i class="fab fa-linkedin"></i>
+                            <h3>LinkedIn</h3>
+                            <p>Professional networking and career updates</p>
+                        </a>
+                        <a href="https://github.com/DapCodes/" class="social-card" target="_blank">
+                            <i class="fab fa-github"></i>
+                            <h3>GitHub</h3>
+                            <p>Explore my open source projects and contributions</p>
+                        </a>
+                        <a href="mailto:daffaramadhan929@gmail.com" class="social-card">
+                            <i class="fas fa-envelope"></i>
+                            <h3>Email</h3>
+                            <p>Let's discuss your next project together</p>
+                        </a>
+                    </div>
+                </section>
+            `,
+};
 
-            card.addEventListener('mouseleave', () => {
-                gsap.to(card, {
-                    duration: 0.4,
-                    scale: 1,
-                    rotationY: 0,
-                    ease: 'power2.out'
-                });
-            });
-        });
+// Page transition and loading logic
+function loadPage(pageName) {
+  const transition = document.querySelector(".page-transition");
+  const pageContent = document.getElementById("page-content");
+  const navLinks = document.querySelectorAll(".nav-link");
 
-        // Certificate card hover effects
-        document.querySelectorAll('.certificate-card').forEach(card => {
-            card.addEventListener('mouseenter', () => {
-                gsap.to(card, {
-                    duration: 0.4,
-                    scale: 1.05,
-                    rotationX: 2,
-                    ease: 'power2.out'
-                });
-                
-                gsap.to(card.querySelector('.certificate-icon'), {
-                    duration: 0.6,
-                    rotation: 360,
-                    ease: 'power2.out'
-                });
-            });
+  // Remove active class from all nav links
+  navLinks.forEach((link) => link.classList.remove("active"));
 
-            card.addEventListener('mouseleave', () => {
-                gsap.to(card, {
-                    duration: 0.4,
-                    scale: 1,
-                    rotationX: 0,
-                    ease: 'power2.out'
-                });
-            });
-        });
+  // Add active class to clicked nav link
+  event.target.classList.add("active");
 
-        // Social card enhanced hover
-        document.querySelectorAll('.social-card').forEach(card => {
-            card.addEventListener('mouseenter', () => {
-                gsap.to(card, {
-                    duration: 0.4,
-                    scale: 1.06,
-                    rotationZ: 2,
-                    ease: 'power2.out'
-                });
-                
-                gsap.to(card.querySelector('i'), {
-                    duration: 0.5,
-                    rotation: 15,
-                    scale: 1.2,
-                    ease: 'elastic.out(1, 0.3)'
-                });
-            });
+  // Start transition
+  transition.classList.add("active");
 
-            card.addEventListener('mouseleave', () => {
-                gsap.to(card, {
-                    duration: 0.4,
-                    scale: 1,
-                    rotationZ: 0,
-                    ease: 'power2.out'
-                });
-                
-                gsap.to(card.querySelector('i'), {
-                    duration: 0.4,
-                    rotation: 0,
-                    scale: 1,
-                    ease: 'power2.out'
-                });
-            });
-        });
+  // Hide current content
+  pageContent.classList.remove("active");
 
-        // CTA button enhanced effects
-        const ctaButton = document.querySelector('.cta-button');
-        ctaButton.addEventListener('mouseenter', () => {
-            gsap.to(ctaButton, {
-                duration: 0.4,
-                scale: 1.08,
-                rotationX: 5,
-                ease: 'power2.out'
-            });
-        });
+  setTimeout(() => {
+    // Change content
+    if (pages[pageName]) {
+      pageContent.innerHTML = pages[pageName];
+    }
 
-        ctaButton.addEventListener('mouseleave', () => {
-            gsap.to(ctaButton, {
-                duration: 0.4,
-                scale: 1,
-                rotationX: 0,
-                ease: 'power2.out'
-            });
-        });
+    // Initialize interactive background for home page
+    if (pageName === "home") {
+      setTimeout(() => {
+        initInteractiveBackground();
+      }, 100);
+    }
 
-        // Enhanced typing effect for subtitle
-        const subtitle = document.querySelector('.subtitle');
-        const text = subtitle.textContent;
-        subtitle.textContent = '';
+    // Show new content
+    pageContent.classList.add("active");
 
-        setTimeout(() => {
-            let i = 0;
-            const typeWriter = () => {
-                if (i < text.length) {
-                    subtitle.textContent += text.charAt(i);
-                    i++;
-                    setTimeout(typeWriter, 60);
-                }
-            };
-            typeWriter();
-        }, 2000);
+    // Hide transition after content loads
+    setTimeout(() => {
+      transition.classList.remove("active");
+    }, 300);
+  }, 600);
+}
 
-        // Add cursor blink effect
-        const cursor = document.createElement('span');
-        cursor.textContent = '|';
-        cursor.style.animation = 'blink 1s infinite';
-        cursor.style.marginLeft = '3px';
-        subtitle.appendChild(cursor);
+// Mobile menu functionality
+const mobileMenu = document.getElementById("mobile-menu");
+const navMenu = document.getElementById("nav-menu");
 
-        // Add blink animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes blink {
-                0%, 50% { opacity: 1; }
-                51%, 100% { opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
+mobileMenu.addEventListener("click", () => {
+  navMenu.classList.toggle("active");
+  const icon = mobileMenu.querySelector("i");
+  icon.classList.toggle("fa-bars");
+  icon.classList.toggle("fa-times");
+});
 
-        // Performance optimization
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                ScrollTrigger.refresh();
-            }, 250);
-        });
+// Close mobile menu when clicking on a link
+document.querySelectorAll(".nav-link").forEach((link) => {
+  link.addEventListener("click", () => {
+    navMenu.classList.remove("active");
+    const icon = mobileMenu.querySelector("i");
+    icon.classList.add("fa-bars");
+    icon.classList.remove("fa-times");
+  });
+});
 
-        // Preload critical animations
-        gsap.set(['.tech-item', '.timeline-item', '.project-card', '.certificate-card', '.social-card'], {
-            opacity: 0
-        });
+// Smooth scroll to top on page change
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}
+
+// Initialize interactive background on page load
+window.addEventListener("load", () => {
+  scrollToTop();
+  setTimeout(() => {
+    initInteractiveBackground();
+  }, 100);
+});
