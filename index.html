@@ -33,42 +33,65 @@
     <!-- Modern Navigation -->
     <nav class="navbar">
       <div class="nav-container">
+        <!-- Logo/Brand -->
+        <div class="nav-brand">
+          <span class="brand-text">DR</span>
+        </div>
+
+        <!-- Desktop Menu -->
         <ul class="nav-menu" id="nav-menu">
-          <li>
-            <a href="#" class="nav-link active" onclick="loadPage('home')"
-              >Home</a
-            >
+          <li class="nav-item">
+            <a href="#" class="nav-link active" data-page="home">
+              <i class="fas fa-home"></i>
+              <span>Home</span>
+            </a>
           </li>
-          <li>
-            <a href="#" class="nav-link" onclick="loadPage('technologies')"
-              >Technologies</a
-            >
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-page="technologies">
+              <i class="fas fa-code"></i>
+              <span>Technologies</span>
+            </a>
           </li>
-          <li>
-            <a href="#" class="nav-link" onclick="loadPage('experience')"
-              >Experience</a
-            >
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-page="experience">
+              <i class="fas fa-briefcase"></i>
+              <span>Experience</span>
+            </a>
           </li>
-          <li>
-            <a href="#" class="nav-link" onclick="loadPage('projects')"
-              >Projects</a
-            >
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-page="projects">
+              <i class="fas fa-laptop-code"></i>
+              <span>Projects</span>
+            </a>
           </li>
-          <li>
-            <a href="#" class="nav-link" onclick="loadPage('certificates')"
-              >Certificates</a
-            >
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-page="certificates">
+              <i class="fas fa-certificate"></i>
+              <span>Certificates</span>
+            </a>
           </li>
-          <li>
-            <a href="#" class="nav-link" onclick="loadPage('connect')"
-              >Connect</a
-            >
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-page="connect">
+              <i class="fas fa-link"></i>
+              <span>Connect</span>
+            </a>
           </li>
         </ul>
-        <button class="mobile-menu" id="mobile-menu">
-          <i class="fas fa-bars"></i>
+
+        <!-- Mobile Menu Button -->
+        <button
+          class="mobile-menu"
+          id="mobile-menu"
+          aria-label="Toggle navigation menu"
+        >
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
         </button>
       </div>
+
+      <!-- Mobile Overlay -->
+      <div class="mobile-overlay" id="mobile-overlay"></div>
     </nav>
 
     <!-- Page Content Container -->
@@ -77,9 +100,9 @@
       <section class="hero">
         <div class="interactive-bg" id="interactive-bg"></div>
         <div class="hero-content">
-          <h1>Daffa Ramadhan M</h1>
+          <h1>Daffa Ramadhan</h1>
           <p class="subtitle">Junior Backend Web Developer</p>
-          <a href="#" class="cta-button" onclick="loadPage('projects')"
+          <a href="#" class="cta-button" data-page="projects"
             >Explore My Work</a
           >
         </div>
@@ -88,10 +111,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <p>
-        &copy; 2024 Daffa Ramadhan. Crafted with modern design and clean code.
-        All rights reserved.
-      </p>
+      <p>&copy; 2025 Daffa Ramadhan | Portofolio Project</p>
     </footer>
 
     <script src="assets/js/main.js"></script>
